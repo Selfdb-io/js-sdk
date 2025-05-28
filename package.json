@@ -41,7 +41,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/selfdb/selfdb.git",
+    "url": "https://github.com/Selfdb-io/js-sdk.git",
     "directory": "js-sdk"
   },
   "devDependencies": {
