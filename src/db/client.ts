@@ -82,7 +82,7 @@ export class QueryBuilder<T = Record<string, unknown>> {
     }
   }
 
-  async update(data: Partial<T>): Promise<T[]> {
+  async update(data: Partial<T>): Promise<T> {
     try {
       if (Object.keys(this.whereConditions).length === 0) {
         throw new SelfDBError({
@@ -92,21 +92,26 @@ export class QueryBuilder<T = Record<string, unknown>> {
         })
       }
 
-      const setClauses = Object.entries(data).map(([key, value]) => {
-        if (typeof value === 'string') return `${key} = '${value.replace(/'/g, "''")}'`
-        return `${key} = ${value}`
-      })
-      
-      const query = `UPDATE ${this.tableName} SET ${setClauses.join(', ')} WHERE ${this.buildWhereClause(this.whereConditions)} RETURNING *`
-      const result = await this.executeSql(query)
-      
-      return result.rows.map(row => {
-        const record: Record<string, unknown> = {}
-        result.columns.forEach((col, index) => {
-          record[col] = row[index]
+      // For now, support simple id-based updates
+      const idValue = this.whereConditions.id
+      if (!idValue) {
+        throw new SelfDBError({
+          message: 'Update currently only supports id-based where conditions',
+          code: 'UPDATE_UNSUPPORTED_WHERE',
+          suggestion: 'Use .where("id", value) for updates'
         })
-        return record as T
+      }
+
+      const params = new URLSearchParams()
+      params.append('id_column', 'id')
+
+      const response = await this.authClient.makeAuthenticatedRequest<T>({
+        method: 'PUT',
+        url: `/api/v1/tables/${this.tableName}/data/${idValue}?${params.toString()}`,
+        data: data
       })
+      
+      return response
     } catch (error) {
       if (error instanceof SelfDBError) throw error
       throw new SelfDBError({
@@ -117,7 +122,7 @@ export class QueryBuilder<T = Record<string, unknown>> {
     }
   }
 
-  async delete(): Promise<number> {
+  async delete(): Promise<boolean> {
     try {
       if (Object.keys(this.whereConditions).length === 0) {
         throw new SelfDBError({
@@ -127,9 +132,25 @@ export class QueryBuilder<T = Record<string, unknown>> {
         })
       }
 
-      const query = `DELETE FROM ${this.tableName} WHERE ${this.buildWhereClause(this.whereConditions)}`
-      const result = await this.executeSql(query)
-      return result.rowCount
+      // For now, support simple id-based deletes
+      const idValue = this.whereConditions.id
+      if (!idValue) {
+        throw new SelfDBError({
+          message: 'Delete currently only supports id-based where conditions',
+          code: 'DELETE_UNSUPPORTED_WHERE',
+          suggestion: 'Use .where("id", value) for deletes'
+        })
+      }
+
+      const params = new URLSearchParams()
+      params.append('id_column', 'id')
+
+      await this.authClient.makeAuthenticatedRequest({
+        method: 'DELETE',
+        url: `/api/v1/tables/${this.tableName}/data/${idValue}?${params.toString()}`
+      })
+      
+      return true
     } catch (error) {
       if (error instanceof SelfDBError) throw error
       throw new SelfDBError({
@@ -203,13 +224,6 @@ export class QueryBuilder<T = Record<string, unknown>> {
     return conditions.join(' AND ')
   }
 
-  private async executeSql(query: string): Promise<SqlQueryResponse> {
-    return this.authClient.makeAuthenticatedRequest<SqlQueryResponse>({
-      method: 'POST',
-      url: '/api/v1/sql/query',
-      data: { query }
-    })
-  }
 }
 
 export class DatabaseClient {
@@ -223,24 +237,6 @@ export class DatabaseClient {
     return new QueryBuilder<T>(this.authClient, tableName)
   }
 
-  private buildWhereClause(where: Record<string, unknown>): string {
-    const conditions = Object.entries(where).map(([key, value]) => {
-      if (value === null) return `${key} IS NULL`
-      if (Array.isArray(value)) return `${key} IN (${value.map(v => typeof v === 'string' ? `'${v}'` : v).join(', ')})`
-      if (typeof value === 'string') return `${key} = '${value}'`
-      return `${key} = ${value}`
-    })
-    return conditions.join(' AND ')
-  }
-
-  private buildOrderByClause(orderBy: string | { column: string; direction: 'asc' | 'desc' }[]): string {
-    if (typeof orderBy === 'string') {
-      return `ORDER BY ${orderBy}`
-    }
-    
-    const clauses = orderBy.map(({ column, direction }) => `${column} ${direction.toUpperCase()}`)
-    return `ORDER BY ${clauses.join(', ')}`
-  }
 
   async getTables(): Promise<DatabaseTable[]> {
     return this.authClient.makeAuthenticatedRequest<DatabaseTable[]>({
@@ -272,87 +268,101 @@ export class DatabaseClient {
   }
 
   async create<T = Record<string, unknown>>(table: string, data: Record<string, unknown>): Promise<T> {
-    const columns = Object.keys(data).join(', ')
-    const values = Object.values(data).map(value => 
-      typeof value === 'string' ? `'${value}'` : value
-    ).join(', ')
-    
-    const query = `INSERT INTO ${table} (${columns}) VALUES (${values}) RETURNING *`
-    const result = await this.executeSql(query)
-    
-    if (result.rows.length === 0) {
-      throw new Error('Failed to create record')
-    }
-    
-    const row = result.rows[0]
-    if (!row) {
-      throw new Error('Failed to create record')
-    }
-    
-    const record: Record<string, unknown> = {}
-    result.columns.forEach((col, index) => {
-      record[col] = row[index]
+    return this.authClient.makeAuthenticatedRequest<T>({
+      method: 'POST',
+      url: `/api/v1/tables/${table}/data`,
+      data
     })
-    
-    return record as T
   }
 
   async read<T = Record<string, unknown>>(table: string, options: QueryOptions = {}): Promise<T[]> {
-    let query = `SELECT ${options.select?.join(', ') || '*'} FROM ${table}`
-    
-    if (options.where && Object.keys(options.where).length > 0) {
-      query += ` WHERE ${this.buildWhereClause(options.where)}`
-    }
-    
-    if (options.orderBy) {
-      query += ` ${this.buildOrderByClause(options.orderBy)}`
-    }
+    const params = new URLSearchParams()
     
     if (options.limit) {
-      query += ` LIMIT ${options.limit}`
+      params.append('page_size', options.limit.toString())
     }
     
     if (options.offset) {
-      query += ` OFFSET ${options.offset}`
+      const page = Math.floor(options.offset / (options.limit || 50)) + 1
+      params.append('page', page.toString())
     }
     
-    const result = await this.executeSql(query)
+    if (options.orderBy) {
+      if (typeof options.orderBy === 'string') {
+        params.append('order_by', options.orderBy.replace(' ', ':').toLowerCase())
+      } else if (Array.isArray(options.orderBy) && options.orderBy.length > 0) {
+        const firstOrder = options.orderBy[0]
+        if (firstOrder) {
+          const orderStr = `${firstOrder.column}:${firstOrder.direction}`
+          params.append('order_by', orderStr)
+        }
+      }
+    }
     
-    return result.rows.map(row => {
-      const record: Record<string, unknown> = {}
-      result.columns.forEach((col, index) => {
-        record[col] = row[index]
-      })
-      return record as T
+    // Add filtering (limited support for simple where conditions)
+    if (options.where && Object.keys(options.where).length > 0) {
+      const firstCondition = Object.entries(options.where)[0]
+      if (firstCondition) {
+        params.append('filter_column', firstCondition[0])
+        params.append('filter_value', String(firstCondition[1]))
+      }
+    }
+
+    const url = `/api/v1/tables/${table}/data${params.toString() ? `?${params.toString()}` : ''}`
+    
+    const response = await this.authClient.makeAuthenticatedRequest<TableDataResponse<T>>({
+      method: 'GET',
+      url
     })
+    
+    return response.data
   }
 
   async update<T = Record<string, unknown>>(
     table: string, 
     data: Record<string, unknown>, 
     where: Record<string, unknown>
-  ): Promise<T[]> {
-    const setClauses = Object.entries(data).map(([key, value]) => {
-      if (typeof value === 'string') return `${key} = '${value}'`
-      return `${key} = ${value}`
-    })
-    
-    const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE ${this.buildWhereClause(where)} RETURNING *`
-    const result = await this.executeSql(query)
-    
-    return result.rows.map(row => {
-      const record: Record<string, unknown> = {}
-      result.columns.forEach((col, index) => {
-        record[col] = row[index]
+  ): Promise<T> {
+    // For now, support simple id-based updates
+    const idValue = where.id
+    if (!idValue) {
+      throw new SelfDBError({
+        message: 'Update currently only supports id-based where conditions',
+        code: 'UPDATE_UNSUPPORTED_WHERE',
+        suggestion: 'Use { id: value } in where clause for updates'
       })
-      return record as T
+    }
+
+    const params = new URLSearchParams()
+    params.append('id_column', 'id')
+
+    return this.authClient.makeAuthenticatedRequest<T>({
+      method: 'PUT',
+      url: `/api/v1/tables/${table}/data/${idValue}?${params.toString()}`,
+      data
     })
   }
 
-  async delete(table: string, where: Record<string, unknown>): Promise<number> {
-    const query = `DELETE FROM ${table} WHERE ${this.buildWhereClause(where)}`
-    const result = await this.executeSql(query)
-    return result.rowCount
+  async delete(table: string, where: Record<string, unknown>): Promise<boolean> {
+    // For now, support simple id-based deletes
+    const idValue = where.id
+    if (!idValue) {
+      throw new SelfDBError({
+        message: 'Delete currently only supports id-based where conditions',
+        code: 'DELETE_UNSUPPORTED_WHERE',
+        suggestion: 'Use { id: value } in where clause for deletes'
+      })
+    }
+
+    const params = new URLSearchParams()
+    params.append('id_column', 'id')
+
+    await this.authClient.makeAuthenticatedRequest({
+      method: 'DELETE',
+      url: `/api/v1/tables/${table}/data/${idValue}?${params.toString()}`
+    })
+    
+    return true
   }
 
   async findById<T = Record<string, unknown>>(table: string, id: string | number): Promise<T | null> {
@@ -366,27 +376,45 @@ export class DatabaseClient {
     limit = 10, 
     options: Omit<QueryOptions, 'limit' | 'offset'> = {}
   ): Promise<PaginatedResponse<T>> {
-    const offset = (page - 1) * limit
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('page_size', limit.toString())
     
-    const countQuery = `SELECT COUNT(*) as total FROM ${table}${
-      options.where ? ` WHERE ${this.buildWhereClause(options.where)}` : ''
-    }`
-    const countResult = await this.executeSql(countQuery)
-    const total = Number(countResult.rows[0]?.[0] || 0)
+    if (options.orderBy) {
+      if (typeof options.orderBy === 'string') {
+        params.append('order_by', options.orderBy.replace(' ', ':').toLowerCase())
+      } else if (Array.isArray(options.orderBy) && options.orderBy.length > 0) {
+        const firstOrder = options.orderBy[0]
+        if (firstOrder) {
+          const orderStr = `${firstOrder.column}:${firstOrder.direction}`
+          params.append('order_by', orderStr)
+        }
+      }
+    }
     
-    const data = await this.read<T>(table, {
-      ...options,
-      limit,
-      offset
+    // Add filtering (limited support for simple where conditions)
+    if (options.where && Object.keys(options.where).length > 0) {
+      const firstCondition = Object.entries(options.where)[0]
+      if (firstCondition) {
+        params.append('filter_column', firstCondition[0])
+        params.append('filter_value', String(firstCondition[1]))
+      }
+    }
+
+    const url = `/api/v1/tables/${table}/data?${params.toString()}`
+    
+    const response = await this.authClient.makeAuthenticatedRequest<TableDataResponse<T>>({
+      method: 'GET',
+      url
     })
     
     return {
-      data,
-      total,
-      page,
-      limit,
-      hasNext: page * limit < total,
-      hasPrev: page > 1
+      data: response.data,
+      total: response.metadata.total_count,
+      page: response.metadata.page,
+      limit: response.metadata.page_size,
+      hasNext: response.metadata.page < response.metadata.total_pages,
+      hasPrev: response.metadata.page > 1
     }
   }
 
@@ -437,11 +465,15 @@ export class DatabaseClient {
   async updateTableData<T = Record<string, unknown>>(
     tableName: string, 
     id: string | number,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    idColumn: string = 'id'
   ): Promise<T> {
+    const params = new URLSearchParams()
+    params.append('id_column', idColumn)
+
     return this.authClient.makeAuthenticatedRequest<T>({
       method: 'PUT',
-      url: `/api/v1/tables/${tableName}/data/${id}`,
+      url: `/api/v1/tables/${tableName}/data/${id}?${params.toString()}`,
       data
     })
   }
