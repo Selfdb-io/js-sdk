@@ -26,7 +26,7 @@ export class FileClient {
   }
 
   async uploadFile(
-    bucketId: number, 
+    bucketId: string, 
     file: File | Blob, 
     filename?: string,
     options: UploadFileOptions = {}
@@ -50,7 +50,7 @@ export class FileClient {
   }
 
   async initiateUpload(
-    bucketId: number,
+    bucketId: string,
     filename: string,
     contentType?: string,
     metadata?: Record<string, unknown>
@@ -69,7 +69,7 @@ export class FileClient {
     )
   }
 
-  async listFiles(bucketId: number, options: FileListOptions = {}): Promise<FileMetadata[]> {
+  async listFiles(bucketId: string, options: FileListOptions = {}): Promise<FileMetadata[]> {
     const params = new URLSearchParams()
     if (options.limit) params.append('limit', options.limit.toString())
     if (options.offset) params.append('offset', options.offset.toString())
@@ -81,7 +81,7 @@ export class FileClient {
     return this.storageHttpClient.get<FileMetadata[]>(url, { headers })
   }
 
-  async downloadFile(bucketId: number, fileId: number): Promise<Blob> {
+  async downloadFile(bucketId: string, fileId: string): Promise<Blob> {
     const headers = this.authClient.getAuthHeaders()
     
     return this.storageHttpClient.request<Blob>({
@@ -92,7 +92,7 @@ export class FileClient {
     })
   }
 
-  async getFileInfo(bucketId: number, fileId: number): Promise<FileMetadata> {
+  async getFileInfo(bucketId: string, fileId: string): Promise<FileMetadata> {
     const headers = this.authClient.getAuthHeaders()
     
     return this.storageHttpClient.get<FileMetadata>(
@@ -102,8 +102,8 @@ export class FileClient {
   }
 
   async updateFileMetadata(
-    bucketId: number, 
-    fileId: number, 
+    bucketId: string, 
+    fileId: string, 
     metadata: Record<string, unknown>
   ): Promise<FileMetadata> {
     const headers = this.authClient.getAuthHeaders()
@@ -115,7 +115,7 @@ export class FileClient {
     )
   }
 
-  async deleteFile(bucketId: number, fileId: number): Promise<void> {
+  async deleteFile(bucketId: string, fileId: string): Promise<void> {
     const headers = this.authClient.getAuthHeaders()
     
     await this.storageHttpClient.delete<void>(
@@ -124,7 +124,7 @@ export class FileClient {
     )
   }
 
-  getFileUrl(bucketId: number, fileId: number): string {
+  getFileUrl(bucketId: string, fileId: string): string {
     return `${this.config.storageUrl}/files/download/${bucketId}/${fileId}`
   }
 

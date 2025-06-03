@@ -36,14 +36,14 @@ export class BucketClient {
     })
   }
 
-  async getBucket(bucketId: number): Promise<Bucket> {
+  async getBucket(bucketId: string): Promise<Bucket> {
     return this.authClient.makeAuthenticatedRequest<Bucket>({
       method: 'GET',
       url: `/api/v1/buckets/${bucketId}`
     })
   }
 
-  async updateBucket(bucketId: number, updates: UpdateBucketRequest): Promise<Bucket> {
+  async updateBucket(bucketId: string, updates: UpdateBucketRequest): Promise<Bucket> {
     return this.authClient.makeAuthenticatedRequest<Bucket>({
       method: 'PUT',
       url: `/api/v1/buckets/${bucketId}`,
@@ -51,14 +51,14 @@ export class BucketClient {
     })
   }
 
-  async deleteBucket(bucketId: number): Promise<void> {
+  async deleteBucket(bucketId: string): Promise<void> {
     await this.authClient.makeAuthenticatedRequest<void>({
       method: 'DELETE',
       url: `/api/v1/buckets/${bucketId}`
     })
   }
 
-  async findByName(bucketName: string): Promise<number | null> {
+  async findByName(bucketName: string): Promise<string | null> {
     try {
       const buckets = await this.listBuckets()
       
@@ -70,11 +70,7 @@ export class BucketClient {
         bucket = buckets.find(b => b.name.toLowerCase() === bucketName.toLowerCase())
       }
       
-      if (bucket) {
-        return bucket.id
-      } else {
-        return null
-      }
+      return bucket ? bucket.id : null
     } catch (error) {
       console.error('Error finding bucket by name:', error)
       return null

@@ -28,37 +28,30 @@ export class StorageClient {
   }
 
   async upload(
-    bucket: string | number,
+    bucket: string,
     file: File | Blob,
     options: UploadOptions = {}
   ): Promise<FileUploadResponse> {
     try {
-      let bucketId: number
-
-      if (typeof bucket === 'string') {
-        const foundBucketId = await this.buckets.findByName(bucket)
-        if (foundBucketId === null) {
-          throw new SelfDBError({
-            message: `Bucket '${bucket}' not found`,
-            code: 'BUCKET_NOT_FOUND',
-            suggestion: 'Create the bucket first or check the bucket name'
-          })
-        }
-        bucketId = foundBucketId
-      } else {
-        bucketId = bucket
+      // Get bucket ID from bucket name
+      const foundBucketId = await this.buckets.findByName(bucket)
+      if (foundBucketId === null) {
+        throw new SelfDBError({
+          message: `Bucket '${bucket}' not found`,
+          code: 'BUCKET_NOT_FOUND',
+          suggestion: 'Create the bucket first or check the bucket name'
+        })
       }
+      
+      const bucketId = foundBucketId
 
       const uploadOptions: UploadFileOptions = {}
       if (options.metadata) {
         uploadOptions.metadata = options.metadata
       }
-
-      if (typeof bucket === 'string') {
-        return await this.files.uploadByBucketName(bucket, file, options.filename, uploadOptions)
-      } else {
-        return await this.files.uploadFile(bucketId, file, options.filename, uploadOptions)
-      }
+      
+      // We have two options: upload by bucket name directly or use the ID we found
+      return await this.files.uploadByBucketName(bucket, file, options.filename, uploadOptions)
     } catch (error) {
       if (error instanceof SelfDBError) throw error
       throw new SelfDBError({
@@ -69,22 +62,16 @@ export class StorageClient {
     }
   }
 
-  async download(bucket: string | number, fileId: number): Promise<Blob> {
+  async download(bucket: string, fileId: string): Promise<Blob> {
     try {
-      let bucketId: number
-
-      if (typeof bucket === 'string') {
-        const foundBucketId = await this.buckets.findByName(bucket)
-        if (foundBucketId === null) {
-          throw new SelfDBError({
-            message: `Bucket '${bucket}' not found`,
-            code: 'BUCKET_NOT_FOUND',
-            suggestion: 'Check the bucket name'
-          })
-        }
-        bucketId = foundBucketId
-      } else {
-        bucketId = bucket
+      // Get bucket ID from bucket name
+      const bucketId = await this.buckets.findByName(bucket)
+      if (bucketId === null) {
+        throw new SelfDBError({
+          message: `Bucket '${bucket}' not found`,
+          code: 'BUCKET_NOT_FOUND',
+          suggestion: 'Check the bucket name'
+        })
       }
 
       return await this.files.downloadFile(bucketId, fileId)
@@ -98,22 +85,16 @@ export class StorageClient {
     }
   }
 
-  async delete(bucket: string | number, fileId: number): Promise<void> {
+  async delete(bucket: string, fileId: string): Promise<void> {
     try {
-      let bucketId: number
-
-      if (typeof bucket === 'string') {
-        const foundBucketId = await this.buckets.findByName(bucket)
-        if (foundBucketId === null) {
-          throw new SelfDBError({
-            message: `Bucket '${bucket}' not found`,
-            code: 'BUCKET_NOT_FOUND',
-            suggestion: 'Check the bucket name'
-          })
-        }
-        bucketId = foundBucketId
-      } else {
-        bucketId = bucket
+      // Get bucket ID from bucket name
+      const bucketId = await this.buckets.findByName(bucket)
+      if (bucketId === null) {
+        throw new SelfDBError({
+          message: `Bucket '${bucket}' not found`,
+          code: 'BUCKET_NOT_FOUND',
+          suggestion: 'Check the bucket name'
+        })
       }
 
       await this.files.deleteFile(bucketId, fileId)
@@ -127,22 +108,16 @@ export class StorageClient {
     }
   }
 
-  async getUrl(bucket: string | number, fileId: number): Promise<string> {
+  async getUrl(bucket: string, fileId: string): Promise<string> {
     try {
-      let bucketId: number
-
-      if (typeof bucket === 'string') {
-        const foundBucketId = await this.buckets.findByName(bucket)
-        if (foundBucketId === null) {
-          throw new SelfDBError({
-            message: `Bucket '${bucket}' not found`,
-            code: 'BUCKET_NOT_FOUND',
-            suggestion: 'Check the bucket name'
-          })
-        }
-        bucketId = foundBucketId
-      } else {
-        bucketId = bucket
+      // Get bucket ID from bucket name
+      const bucketId = await this.buckets.findByName(bucket)
+      if (bucketId === null) {
+        throw new SelfDBError({
+          message: `Bucket '${bucket}' not found`,
+          code: 'BUCKET_NOT_FOUND',
+          suggestion: 'Check the bucket name'
+        })
       }
 
       return this.files.getFileUrl(bucketId, fileId)
@@ -156,22 +131,16 @@ export class StorageClient {
     }
   }
 
-  async list(bucket: string | number, options: { limit?: number; offset?: number; search?: string } = {}): Promise<FileMetadata[]> {
+  async list(bucket: string, options: { limit?: number; offset?: number; search?: string } = {}): Promise<FileMetadata[]> {
     try {
-      let bucketId: number
-
-      if (typeof bucket === 'string') {
-        const foundBucketId = await this.buckets.findByName(bucket)
-        if (foundBucketId === null) {
-          throw new SelfDBError({
-            message: `Bucket '${bucket}' not found`,
-            code: 'BUCKET_NOT_FOUND',
-            suggestion: 'Check the bucket name'
-          })
-        }
-        bucketId = foundBucketId
-      } else {
-        bucketId = bucket
+      // Get bucket ID from bucket name
+      const bucketId = await this.buckets.findByName(bucket)
+      if (bucketId === null) {
+        throw new SelfDBError({
+          message: `Bucket '${bucket}' not found`,
+          code: 'BUCKET_NOT_FOUND',
+          suggestion: 'Check the bucket name'
+        })
       }
 
       return await this.files.listFiles(bucketId, options)

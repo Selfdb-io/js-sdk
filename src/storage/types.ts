@@ -1,5 +1,5 @@
 export interface Bucket {
-  id: number
+  id: string
   name: string
   is_public: boolean
   description?: string
@@ -21,11 +21,11 @@ export interface UpdateBucketRequest {
 }
 
 export interface FileMetadata {
-  id: number
+  id: string
   filename: string
   content_type: string
   size: number
-  bucket_id: number
+  bucket_id: string
   user_id: string
   created_at: string
   updated_at: string
@@ -45,7 +45,7 @@ export interface FileListOptions {
 
 export interface PresignedUploadResponse {
   upload_url: string
-  file_id: number
+  file_id: string
   fields?: Record<string, string>
 }
 
