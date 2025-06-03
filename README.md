@@ -1,224 +1,73 @@
-# 🚀 SelfDB JavaScript SDK - Super Simple Guide
+# 🚀 SelfDB JavaScript SDK - AI Assistant Guide
 
-**The easiest way to use SelfDB in your JavaScript/TypeScript apps!**
+**Copy-paste ready guide for using SelfDB in JavaScript/TypeScript applications**
 
-Perfect for: AI assistants, beginners, copy-paste coding, and rapid prototyping.
-
-## 📋 Copy This Checklist for AI
+## 📋 Quick Reference for AI Assistants
 
 ```
+IMPORTANT SETUP CHECKLIST:
 [ ] Install: npm install @selfdb/js-sdk
-[ ] Get ANON_KEY from SelfDB .env file
+[ ] Set environment variables (SELFDB_URL, SELFDB_STORAGE_URL, SELFDB_ANON_KEY)
 [ ] Create client with createClient()
-[ ] Use db.from() for database queries (like Supabase)
-[ ] Use storage.upload() for file uploads
+[ ] Export db, storage, auth from selfdb instance
+[ ] Use db.from() for queries (Supabase-like syntax)
+[ ] Use storage.upload() for files
 [ ] Use auth.login() for authentication
-[ ] All methods return promises - use await
+[ ] Always use await (all methods are async)
 ```
 
-## ⚡ 1-Minute Setup
+## 🎯 1. Summary
 
-### Step 1: Install
+SelfDB is a self-hosted database with a Supabase-like API. This SDK provides:
+- **Database**: CRUD operations with query builder
+- **Storage**: File upload/download with buckets
+- **Auth**: User registration, login, session management
+- **Realtime**: Live data updates (optional)
+
+**Key Pattern**: Create client once, export individual services (db, storage, auth)
+
+## 🔧 2. Environment Variables
+
+### For React/Vite Projects
 ```bash
-npm install @selfdb/js-sdk
-```
-
-### Step 2: Get Your Anonymous Key
-Look in your SelfDB `.env` file for this line:
-```bash
-ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-Copy that long string after `ANON_KEY=`
-
-### Step 3: Create Client
-```typescript
-import { createClient } from '@selfdb/js-sdk'
-
-const selfdb = createClient({
-  baseUrl: 'http://localhost:8000',        // Your SelfDB URL
-  storageUrl: 'http://localhost:8001',     // Your storage URL
-  anonKey: 'YOUR_ANON_KEY_HERE'            // Paste your key here
-})
-```
-
-**✅ Done! You can now use SelfDB!**
-
-## 🎯 Most Common Tasks (Copy & Paste Ready)
-
-### 🔐 Login a User
-```typescript
-// Login existing user
-const { user } = await selfdb.auth.login({
-  email: 'user@example.com',
-  password: 'their-password'
-})
-console.log('Logged in:', user.email)
-```
-
-### 👤 Register New User  
-```typescript
-// Create new user account
-const user = await selfdb.auth.register({
-  email: 'new@example.com',
-  password: 'new-password'
-})
-console.log('Created user:', user.email)
-```
-
-### 📊 Get Data from Database (Like SELECT)
-```typescript
-// Get all users
-const users = await selfdb.db.from('users').execute()
-
-// Get users with filters
-const activeUsers = await selfdb.db
-  .from('users')
-  .where('active', true)
-  .order('created_at', 'desc')
-  .limit(10)
-  .execute()
-
-// Get one user by ID
-const user = await selfdb.db
-  .from('users')
-  .where('id', 123)
-  .single()
-```
-
-### ➕ Add Data to Database (Like INSERT)
-```typescript
-// Add new record
-const newUser = await selfdb.db.from('users').insert({
-  email: 'new@example.com',
-  name: 'John Doe',
-  active: true
-})
-```
-
-### 📝 Update Data in Database
-```typescript
-// Update records
-const updatedUsers = await selfdb.db
-  .from('users')
-  .where('id', 123)
-  .update({ name: 'New Name' })
-```
-
-### ❌ Delete Data from Database
-```typescript
-// Delete records (requires where clause for safety)
-const deletedCount = await selfdb.db
-  .from('users')
-  .where('id', 123)
-  .delete()
-```
-
-### 📁 Upload Files
-```typescript
-// Upload a file to storage
-const file = document.getElementById('fileInput').files[0]
-const result = await selfdb.storage.upload('my-bucket', file)
-console.log('Uploaded file ID:', result.file.id)
-```
-
-### 📥 Download Files
-```typescript
-// Download a file
-const blob = await selfdb.storage.download('my-bucket', fileId)
-// Convert to URL for display
-const url = URL.createObjectURL(blob)
-```
-
-## 🏗️ Complete Example App
-
-Here's a complete working example you can copy and modify:
-
-```typescript
-import { createClient } from '@selfdb/js-sdk'
-
-// 1. Setup client
-const selfdb = createClient({
-  baseUrl: 'http://localhost:8000',
-  storageUrl: 'http://localhost:8001', 
-  anonKey: 'your-anon-key-here'
-})
-
-// 2. User management functions
-export async function loginUser(email: string, password: string) {
-  try {
-    const { user } = await selfdb.auth.login({ email, password })
-    return { success: true, user }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
-
-export async function registerUser(email: string, password: string) {
-  try {
-    const user = await selfdb.auth.register({ email, password })
-    return { success: true, user }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
-
-// 3. Database functions
-export async function getUsers() {
-  return await selfdb.db.from('users').execute()
-}
-
-export async function createUser(userData: any) {
-  return await selfdb.db.from('users').insert(userData)
-}
-
-export async function updateUser(id: number, updates: any) {
-  return await selfdb.db.from('users').where('id', id).update(updates)
-}
-
-export async function deleteUser(id: number) {
-  return await selfdb.db.from('users').where('id', id).delete()
-}
-
-// 4. File upload function
-export async function uploadFile(bucketName: string, file: File) {
-  try {
-    const result = await selfdb.storage.upload(bucketName, file)
-    return { success: true, file: result.file }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
-
-// 5. Get file URL for display
-export function getFileUrl(bucketName: string, fileId: number) {
-  return selfdb.storage.getUrl(bucketName, fileId)
-}
-```
-
-## 🔧 Environment Setup (.env file)
-
-Create a `.env` file in your project:
-
-```bash
-# For Vite/React projects
+# .env file
 VITE_SELFDB_URL=http://localhost:8000
 VITE_SELFDB_STORAGE_URL=http://localhost:8001
-VITE_SELFDB_ANON_KEY=your-anon-key-here
-
-# For Next.js projects  
-NEXT_PUBLIC_SELFDB_URL=http://localhost:8000
-NEXT_PUBLIC_SELFDB_STORAGE_URL=http://localhost:8001
-NEXT_PUBLIC_SELFDB_ANON_KEY=your-anon-key-here
-
-# For Node.js projects
-SELFDB_URL=http://localhost:8000
-SELFDB_STORAGE_URL=http://localhost:8001
-SELFDB_ANON_KEY=your-anon-key-here
+VITE_SELFDB_ANON_KEY=your_anon_key_here
 ```
 
-Then use in your code:
+### For Next.js Projects
+```bash
+# .env.local file
+NEXT_PUBLIC_SELFDB_URL=http://localhost:8000
+NEXT_PUBLIC_SELFDB_STORAGE_URL=http://localhost:8001
+NEXT_PUBLIC_SELFDB_ANON_KEY=your_anon_key_here
+```
 
+### For React Native/Expo Projects
+```bash
+# .env file
+EXPO_PUBLIC_SELFDB_URL=http://localhost:8000
+EXPO_PUBLIC_SELFDB_STORAGE_URL=http://localhost:8001
+EXPO_PUBLIC_SELFDB_ANON_KEY=your_anon_key_here
+```
+
+### For Node.js Projects
+```bash
+# .env file
+SELFDB_URL=http://localhost:8000
+SELFDB_STORAGE_URL=http://localhost:8001
+SELFDB_ANON_KEY=your_anon_key_here
+```
+
+**Getting the ANON_KEY**: Look in your SelfDB dashboard settings page. 
+
+## 🏗️ 3. Client Setup
+
+### Basic Setup (selfdb.ts)
 ```typescript
+import { createClient } from '@selfdb/js-sdk'
+
 // For Vite/React
 const selfdb = createClient({
   baseUrl: import.meta.env.VITE_SELFDB_URL,
@@ -228,288 +77,510 @@ const selfdb = createClient({
 
 // For Next.js
 const selfdb = createClient({
-  baseUrl: process.env.NEXT_PUBLIC_SELFDB_URL,
-  storageUrl: process.env.NEXT_PUBLIC_SELFDB_STORAGE_URL,
-  anonKey: process.env.NEXT_PUBLIC_SELFDB_ANON_KEY
+  baseUrl: process.env.NEXT_PUBLIC_SELFDB_URL!,
+  storageUrl: process.env.NEXT_PUBLIC_SELFDB_STORAGE_URL!,
+  anonKey: process.env.NEXT_PUBLIC_SELFDB_ANON_KEY!
 })
 
-// For Node.js
-const selfdb = createClient({
-  baseUrl: process.env.SELFDB_URL,
-  storageUrl: process.env.SELFDB_STORAGE_URL,
-  anonKey: process.env.SELFDB_ANON_KEY
-})
-```
+// For React Native/Expo
+import Constants from 'expo-constants'
 
-## 📱 React Component Example
+const SELFDB_URL = Constants.expoConfig?.extra?.SELFDB_URL || 
+  process.env.EXPO_PUBLIC_SELFDB_URL || 
+  'http://localhost:8000'
 
-```tsx
-import React, { useState, useEffect } from 'react'
-import { createClient } from '@selfdb/js-sdk'
+const SELFDB_STORAGE_URL = Constants.expoConfig?.extra?.SELFDB_STORAGE_URL || 
+  process.env.EXPO_PUBLIC_SELFDB_STORAGE_URL || 
+  'http://localhost:8001'
 
-const selfdb = createClient({
-  baseUrl: import.meta.env.VITE_SELFDB_URL,
-  anonKey: import.meta.env.VITE_SELFDB_ANON_KEY
-})
+const SELFDB_ANON_KEY = Constants.expoConfig?.extra?.SELFDB_ANON_KEY || 
+  process.env.EXPO_PUBLIC_SELFDB_ANON_KEY
 
-function UserManager() {
-  const [users, setUsers] = useState([])
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-
-  // Load users when component mounts
-  useEffect(() => {
-    loadUsers()
-  }, [])
-
-  async function loadUsers() {
-    try {
-      const userData = await selfdb.db.from('users').execute()
-      setUsers(userData)
-    } catch (error) {
-      console.error('Failed to load users:', error)
-    }
-  }
-
-  async function handleLogin() {
-    try {
-      const { user } = await selfdb.auth.login({ email, password })
-      alert(`Welcome ${user.email}!`)
-      loadUsers() // Refresh data
-    } catch (error) {
-      alert('Login failed: ' + error.message)
-    }
-  }
-
-  async function handleRegister() {
-    try {
-      const user = await selfdb.auth.register({ email, password })
-      alert(`Account created for ${user.email}!`)
-      loadUsers() // Refresh data
-    } catch (error) {
-      alert('Registration failed: ' + error.message)
-    }
-  }
-
-  return (
-    <div>
-      <h1>User Manager</h1>
-      
-      {/* Login Form */}
-      <div>
-        <input 
-          type="email" 
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input 
-          type="password" 
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={handleLogin}>Login</button>
-        <button onClick={handleRegister}>Register</button>
-      </div>
-
-      {/* Users List */}
-      <div>
-        <h2>Users ({users.length})</h2>
-        {users.map(user => (
-          <div key={user.id}>
-            {user.email} - {user.name || 'No name'}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+if (!SELFDB_ANON_KEY) {
+  throw new Error('EXPO_PUBLIC_SELFDB_ANON_KEY is required. Please check your .env file.')
 }
 
-export default UserManager
+const selfdb = createClient({
+  baseUrl: SELFDB_URL,
+  storageUrl: SELFDB_STORAGE_URL,
+  anonKey: SELFDB_ANON_KEY
+})
+
+// Export individual clients for convenience
+export const auth = selfdb.auth
+export const db = selfdb.db
+export const storage = selfdb.storage
+export const realtime = selfdb.realtime
+export const functions = selfdb.functions
 ```
 
-## 🎨 Query Builder Patterns (Supabase-like)
+## 📊 4. CRUD Operations
 
-The query builder works just like Supabase - if you know Supabase, you know this!
-
+### Database Types (Example)
 ```typescript
-// Basic patterns
-await selfdb.db.from('table').execute()                     // SELECT *
-await selfdb.db.from('table').select('id, name').execute()  // SELECT id, name
-await selfdb.db.from('table').where('id', 1).execute()      // WHERE id = 1
-await selfdb.db.from('table').order('name').execute()       // ORDER BY name
-await selfdb.db.from('table').limit(10).execute()           // LIMIT 10
+interface Topic {
+  id: string
+  title: string
+  content: string
+  author_name: string
+  user_id?: string
+  file_id?: string
+  created_at: string
+  updated_at: string
+}
 
-// Chaining (like Supabase)
-await selfdb.db
-  .from('users')
-  .select('id, email, name')
-  .where('active', true)
+interface Comment {
+  id: string
+  topic_id: string
+  content: string
+  author_name: string
+  user_id?: string
+  file_id?: string
+  created_at: string
+  updated_at: string
+}
+```
+
+### CREATE Operations
+```typescript
+import { db, storage } from './selfdb'
+
+// Simple insert
+const newTopic = await db.from('topics').insert({
+  title: 'New Discussion',
+  content: 'Topic content',
+  author_name: 'Jane Doe',
+  user_id: 'user123'
+})
+
+// Insert with file upload
+const file = new File([blob], 'document.pdf', { type: 'application/pdf' })
+const { file: uploaded } = await storage.upload('discussion', file)
+
+const topicWithFile = await db.from('topics').insert({
+  title: 'Document Review',
+  content: 'Please review this document',
+  author_name: 'Jane Doe',
+  user_id: 'user456',
+  file_id: uploaded.id
+})
+```
+
+### READ Operations
+```typescript
+// Get all records
+const topics = await db.from('topics')
   .order('created_at', 'desc')
-  .limit(20)
   .execute()
 
 // Get single record
-const user = await selfdb.db.from('users').where('id', 123).single()
+const topic = await db.from('topics')
+  .where('id', 'topic123')
+  .single()
 
-// Insert data
-await selfdb.db.from('users').insert({ email: 'test@test.com', name: 'Test' })
+// Get with filters
+const userTopics = await db.from('topics')
+  .where('user_id', 'user123')
+  .order('created_at', 'desc')
+  .limit(10)
+  .execute()
 
-// Update data  
-await selfdb.db.from('users').where('id', 123).update({ name: 'New Name' })
-
-// Delete data
-await selfdb.db.from('users').where('id', 123).delete()
+// Get with pagination
+const paginatedTopics = await db.from('topics')
+  .order('created_at', 'desc')
+  .limit(10)
+  .offset(20)
+  .execute()
 ```
 
-## 📦 Storage Made Simple
-
+### UPDATE Operations
 ```typescript
-// Create bucket first (one time setup)
-await selfdb.storage.createBucket({
-  name: 'my-files',
-  is_public: true
+// Simple update
+await db.from('topics')
+  .where('id', 'topic123')
+  .update({ title: 'Updated Title' })
+
+// Update multiple fields
+await db.from('topics')
+  .where('id', 'topic123')
+  .update({
+    title: 'New Title',
+    content: 'Updated content',
+    updated_at: new Date().toISOString()
+  })
+
+// Update with file replacement
+const newFile = new File([blob], 'new-doc.pdf', { type: 'application/pdf' })
+const { file: newUploaded } = await storage.upload('discussion', newFile)
+
+await db.from('topics')
+  .where('id', 'topic123')
+  .update({ file_id: newUploaded.id })
+
+// Delete old file if needed
+if (oldFileId) {
+  await storage.files.deleteFile(oldFileId)
+}
+```
+
+### DELETE Operations
+```typescript
+// Delete record
+await db.from('topics')
+  .where('id', 'topic123')
+  .delete()
+
+// Delete with file cleanup
+const topic = await db.from('topics')
+  .where('id', 'topic123')
+  .single()
+
+if (topic?.file_id) {
+  await storage.files.deleteFile(topic.file_id)
+}
+
+await db.from('topics')
+  .where('id', 'topic123')
+  .delete()
+```
+
+## 🔐 5. Authentication
+
+### Login
+```typescript
+import { auth } from './selfdb'
+
+// Simple login
+const response = await auth.login({
+  email: 'user@example.com',
+  password: 'password123'
+})
+console.log('Logged in:', response.user.email)
+console.log('Access token:', response.access_token)
+
+// Login with error handling
+try {
+  const response = await auth.login({ email, password })
+  return { success: true, data: response }
+} catch (error) {
+  console.error('Login failed:', error)
+  return { success: false, error: error.message }
+}
+```
+
+### Register
+```typescript
+// Register new user
+const user = await auth.register({
+  email: 'new@example.com',
+  password: 'password123'
 })
 
-// Upload file
-const file = document.getElementById('fileInput').files[0]
-const result = await selfdb.storage.upload('my-files', file)
-
-// Get file URL for displaying
-const url = await selfdb.storage.getUrl('my-files', result.file.id)
-document.getElementById('image').src = url
-
-// Download file
-const blob = await selfdb.storage.download('my-files', fileId)
-
-// List files in bucket
-const files = await selfdb.storage.list('my-files')
-
-// Delete file
-await selfdb.storage.delete('my-files', fileId)
+// Register with validation
+const registerUser = async (email: string, password: string, confirmPassword: string) => {
+  // Validate
+  if (!email.includes('@')) throw new Error('Invalid email')
+  if (password.length < 6) throw new Error('Password too short')
+  if (password !== confirmPassword) throw new Error('Passwords do not match')
+  
+  // Register
+  const user = await auth.register({ email, password })
+  
+  // Auto-login after registration
+  const loginResponse = await auth.login({ email, password })
+  return loginResponse
+}
 ```
 
-## 🚨 Error Handling Made Easy
+### Session Management
+```typescript
+// Check if authenticated
+const isLoggedIn = auth.isAuthenticated()
+
+// Get current user
+const currentUser = auth.getCurrentUser()
+
+// Get user from API
+const user = await auth.getUser()
+
+// Logout
+await auth.logout()
+
+// Check and restore session on app start
+const initAuth = async () => {
+  if (auth.isAuthenticated()) {
+    const user = auth.getCurrentUser() || await auth.getUser()
+    return user
+  }
+  return null
+}
+```
+
+## 📁 6. Storage Operations
+
+### File Upload
+```typescript
+// Simple upload
+const file = new File([blob], 'image.jpg', { type: 'image/jpeg' })
+const result = await storage.upload('my-bucket', file)
+console.log('File ID:', result.file.id)
+
+// Upload with progress
+const result = await storage.upload('my-bucket', file, {
+  onProgress: (progress) => {
+    console.log(`Upload progress: ${progress}%`)
+  }
+})
+```
+
+### File Access
+```typescript
+// Get public URL
+const url = storage.files.getFileUrl('my-bucket', fileId)
+
+// Download file
+const blob = await storage.download('my-bucket', fileId)
+
+// List files
+const files = await storage.list('my-bucket')
+
+// Delete file
+await storage.files.deleteFile(fileId)
+```
+
+## 🛡️ 7. Error Handling Patterns
 
 ```typescript
-async function safeOperation() {
+// Wrap operations for safety
+const safeDbOperation = async <T>(operation: () => Promise<T>) => {
   try {
-    const result = await selfdb.db.from('users').execute()
+    const result = await operation()
     return { success: true, data: result }
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Database error:', error)
     return { success: false, error: error.message }
   }
 }
 
-// Use the safe operation
-const result = await safeOperation()
+// Usage
+const result = await safeDbOperation(() => 
+  db.from('topics').insert({ title: 'New Topic' })
+)
+
 if (result.success) {
-  console.log('Got data:', result.data)
+  console.log('Created:', result.data)
 } else {
-  console.log('Error occurred:', result.error)
+  console.error('Failed:', result.error)
+}
+
+// Auth-aware operations
+const authOperation = async <T>(operation: () => Promise<T>) => {
+  if (!auth.isAuthenticated()) {
+    throw new Error('User not authenticated')
+  }
+  
+  try {
+    return await operation()
+  } catch (error) {
+    if (error.message.includes('401')) {
+      // Try token refresh
+      const refreshed = await auth.refresh()
+      if (refreshed) {
+        return await operation() // Retry
+      }
+      await auth.logout()
+      throw new Error('Session expired')
+    }
+    throw error
+  }
 }
 ```
 
-## 🔄 Real-time Updates (Optional)
+## 💡 8. Complete Examples
 
+### Comment System with Files
 ```typescript
-// Connect to real-time updates
-await selfdb.realtime.connect()
+// Create comment with optional file
+const createComment = async (topicId: string, content: string, file?: File) => {
+  let fileId = null
+  
+  // Upload file if provided
+  if (file) {
+    const { file: uploaded } = await storage.upload('discussion', file)
+    fileId = uploaded.id
+  }
+  
+  // Create comment
+  const comment = await db.from('comments').insert({
+    topic_id: topicId,
+    content: content,
+    author_name: auth.getCurrentUser()?.email || 'Anonymous',
+    user_id: auth.getCurrentUser()?.id,
+    file_id: fileId
+  })
+  
+  return comment
+}
 
-// Listen for changes
-selfdb.realtime.subscribe('users', (payload) => {
-  console.log('User data changed:', payload)
-  // Update your UI here
-})
+// Get comments with file URLs
+const getCommentsWithFiles = async (topicId: string) => {
+  const comments = await db.from('comments')
+    .where('topic_id', topicId)
+    .order('created_at', 'desc')
+    .execute()
+  
+  // Add file URLs
+  return comments.map(comment => ({
+    ...comment,
+    fileUrl: comment.file_id 
+      ? storage.files.getFileUrl('discussion', comment.file_id)
+      : null
+  }))
+}
 
-// Clean up when done
-selfdb.realtime.disconnect()
+// Delete comment with file cleanup
+const deleteComment = async (commentId: string) => {
+  // Get comment first
+  const comment = await db.from('comments')
+    .where('id', commentId)
+    .single()
+  
+  // Delete file if exists
+  if (comment?.file_id) {
+    try {
+      await storage.files.deleteFile(comment.file_id)
+    } catch (error) {
+      console.warn('File deletion failed:', error)
+    }
+  }
+  
+  // Delete comment
+  await db.from('comments')
+    .where('id', commentId)
+    .delete()
+}
 ```
 
-## 🧪 Testing Your Setup
+### React Component Pattern
+```tsx
+import React, { useState, useEffect } from 'react'
+import { db, auth, storage } from './selfdb'
 
-Copy this test function to verify everything works:
+function TopicList() {
+  const [topics, setTopics] = useState<Topic[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadTopics()
+  }, [])
+
+  const loadTopics = async () => {
+    try {
+      setLoading(true)
+      const data = await db.from('topics')
+        .order('created_at', 'desc')
+        .execute()
+      setTopics(data)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createTopic = async (title: string, content: string) => {
+    try {
+      const topic = await db.from('topics').insert({
+        title,
+        content,
+        author_name: auth.getCurrentUser()?.email || 'Anonymous',
+        user_id: auth.getCurrentUser()?.id
+      })
+      
+      // Refresh list
+      await loadTopics()
+      return { success: true, topic }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+
+  return (
+    <div>
+      {topics.map(topic => (
+        <div key={topic.id}>
+          <h3>{topic.title}</h3>
+          <p>{topic.content}</p>
+          <small>By {topic.author_name} on {topic.created_at}</small>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+## 🚀 9. Quick Test Script
 
 ```typescript
+// Test your SelfDB setup
 async function testSelfDB() {
+  console.log('🧪 Testing SelfDB connection...')
+  
   try {
-    console.log('Testing SelfDB connection...')
+    // Test database
+    const tables = await db.getTables()
+    console.log('✅ Database connected! Tables:', tables.length)
     
-    // Test 1: Check if we can connect
-    const tables = await selfdb.db.getTables()
-    console.log('✅ Connected! Found tables:', tables.length)
+    // Test auth
+    const isAuth = auth.isAuthenticated()
+    console.log('✅ Auth client ready. Authenticated:', isAuth)
     
-    // Test 2: Try to read data (this will work even without auth)
-    try {
-      const data = await selfdb.db.from('users').limit(1).execute()
-      console.log('✅ Database read works!')
-    } catch (e) {
-      console.log('⚠️ Database read failed (might need tables):', e.message)
-    }
+    // Test storage
+    const buckets = await storage.listBuckets()
+    console.log('✅ Storage connected! Buckets:', buckets.length)
     
-    // Test 3: Check storage
-    try {
-      const buckets = await selfdb.storage.listBuckets()
-      console.log('✅ Storage works! Found buckets:', buckets.length)
-    } catch (e) {
-      console.log('⚠️ Storage failed:', e.message)
-    }
-    
-    console.log('🎉 SelfDB setup is working!')
-    
+    console.log('🎉 All systems operational!')
+    return true
   } catch (error) {
-    console.error('❌ SelfDB test failed:', error.message)
-    console.log('Check your baseUrl and anonKey')
+    console.error('❌ Setup test failed:', error.message)
+    console.log('📋 Check your environment variables and server status')
+    return false
   }
 }
 
-// Run the test
+// Run test
 testSelfDB()
 ```
 
-## 📚 AI Assistant Instructions
+## 📌 Common Patterns for AI Assistants
 
-When helping users with this SDK, remember:
+When helping users with SelfDB:
 
-1. **Always start with `createClient()`** - this is required first
-2. **Use `db.from()` pattern** - it's like Supabase, very familiar
-3. **Use `storage.upload()` for files** - much simpler than old API
-4. **Always use `await`** - all methods are async
-5. **Handle errors with try/catch** - show users the safe pattern
-6. **Environment variables** - guide users to set these up properly
-7. **Anonymous key is required** - this trips up many users
+1. **Always check client setup first** - Most errors come from missing env vars
+2. **Use the exported services** - `db`, `storage`, `auth` from selfdb instance
+3. **Follow Supabase patterns** - The API is intentionally similar
+4. **Remember async/await** - All operations return promises
+5. **Handle errors gracefully** - Wrap operations in try/catch
+6. **Check authentication** - Use `auth.isAuthenticated()` before protected operations
+7. **Clean up files** - Delete files when deleting records with file_id
 
-## 🆘 Troubleshooting
+## 🔧 Troubleshooting Checklist
 
-**Problem: "Cannot read properties of undefined"**
-- Solution: Make sure you called `createClient()` first
-
-**Problem: "401 Unauthorized"**  
-- Solution: Check your `anonKey` is correct and in the config
-
-**Problem: "Network Error"**
-- Solution: Check your `baseUrl` is correct and SelfDB is running
-
-**Problem: "Table does not exist"**
-- Solution: Create tables first or check table names are correct
-
-**Problem: "No such bucket"**
-- Solution: Create bucket first with `storage.createBucket()`
-
-## 💡 Pro Tips
-
-1. **Use TypeScript** - the SDK has great type support
-2. **Set up environment variables** - keeps your keys safe  
-3. **Use the query builder** - it's much easier than raw SQL
-4. **Handle errors gracefully** - show users friendly messages
-5. **Test your setup early** - use the test function above
+```
+Common Issues:
+[ ] "Cannot read properties of undefined" → Check createClient() was called
+[ ] "401 Unauthorized" → Check ANON_KEY is set correctly
+[ ] "Network Error" → Check baseUrl and server is running
+[ ] "Table does not exist" → Check table name spelling
+[ ] "No such bucket" → Create bucket first with storage.createBucket()
+[ ] "Invalid credentials" → Check email/password are correct
+```
 
 ---
 
-**🎯 That's it! You now know everything you need to use SelfDB effectively.**
-
-Copy any code snippet above and modify it for your needs. The SDK is designed to be intuitive and error-forgiving.
-
-Need help? The SDK has great error messages that will guide you to solutions!
+**This guide is optimized for AI assistants. Copy any section needed and adapt for your use case.**
