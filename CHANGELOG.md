@@ -5,6 +5,23 @@ All notable changes to the SelfDB JavaScript SDK will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-06-03
+
+### Changed
+- **BREAKING**: Updated file deletion to use unified backend endpoint instead of direct storage service calls
+- **BREAKING**: `FileClient.deleteFile()` now only requires `fileId` parameter (removed `bucketId` requirement)
+- **BREAKING**: `StorageClient.delete()` now only requires `fileId` parameter (removed `bucket` requirement)
+- File deletion now properly handles both database metadata and storage service cleanup in a single operation
+- Added exports for `FileClient`, `BucketClient`, and `StorageClient` classes for direct access
+
+### Fixed
+- Fixed 404 errors when deleting files due to incorrect storage service endpoint usage
+- Fixed file deletion not properly removing both metadata and physical files
+- Improved error handling for file deletion operations
+
+### Added
+- Direct access to storage client classes for advanced use cases
+
 ## [1.1.0] - 2024-12-28
 
 ### Changed

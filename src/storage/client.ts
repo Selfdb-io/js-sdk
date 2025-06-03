@@ -87,17 +87,7 @@ export class StorageClient {
 
   async delete(bucket: string, fileId: string): Promise<void> {
     try {
-      // Get bucket ID from bucket name
-      const bucketId = await this.buckets.findByName(bucket)
-      if (bucketId === null) {
-        throw new SelfDBError({
-          message: `Bucket '${bucket}' not found`,
-          code: 'BUCKET_NOT_FOUND',
-          suggestion: 'Check the bucket name'
-        })
-      }
-
-      await this.files.deleteFile(bucketId, fileId)
+      await this.files.deleteFile(fileId)
     } catch (error) {
       if (error instanceof SelfDBError) throw error
       throw new SelfDBError({

@@ -1,6 +1,6 @@
 {
   "name": "@selfdb/js-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "Official JavaScript/TypeScript SDK for SelfDB - a self-hosted alternative to Supabase",
   "main": "./dist/index.cjs",

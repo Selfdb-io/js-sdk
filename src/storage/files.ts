@@ -115,13 +115,11 @@ export class FileClient {
     )
   }
 
-  async deleteFile(bucketId: string, fileId: string): Promise<void> {
-    const headers = this.authClient.getAuthHeaders()
-    
-    await this.storageHttpClient.delete<void>(
-      `/files/${bucketId}/${fileId}`,
-      { headers }
-    )
+  async deleteFile(fileId: string): Promise<void> {
+    await this.authClient.makeAuthenticatedRequest<void>({
+      method: 'DELETE',
+      url: `/api/v1/files/${fileId}`
+    })
   }
 
   getFileUrl(bucketId: string, fileId: string): string {

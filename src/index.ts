@@ -34,3 +34,12 @@ export * from './db/types'
 export * from './storage/types'
 export * from './realtime/types'
 export * from './functions/types'
+
+// Export individual client classes
+export { AuthClient } from './auth/client'
+export { DatabaseClient } from './db/client'
+export { StorageClient } from './storage/client'
+export { BucketClient } from './storage/buckets'
+export { FileClient } from './storage/files'
+export { RealtimeClient } from './realtime/client'
+export { FunctionsClient } from './functions/client'
