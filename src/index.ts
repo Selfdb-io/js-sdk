@@ -4,6 +4,7 @@ import { DatabaseClient } from './db/client'
 import { StorageClient } from './storage/client'
 import { RealtimeClient, type RealtimeConfig } from './realtime/client'
 import { FunctionsClient } from './functions/client'
+import { FileClient } from './storage/files'
 
 export class SelfDB {
   public readonly auth: AuthClient
@@ -11,6 +12,7 @@ export class SelfDB {
   public readonly storage: StorageClient
   public readonly realtime: RealtimeClient
   public readonly functions: FunctionsClient
+  public readonly files: FileClient
 
   constructor(config: SelfDBConfig, realtimeConfig?: RealtimeConfig) {
     Config.init(config)
@@ -20,6 +22,7 @@ export class SelfDB {
     this.storage = new StorageClient(this.auth)
     this.realtime = new RealtimeClient(this.auth, realtimeConfig)
     this.functions = new FunctionsClient(this.auth)
+    this.files = new FileClient(this.auth)
   }
 }
 

@@ -5,6 +5,16 @@ All notable changes to the SelfDB JavaScript SDK will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-01-03
+
+### Added
+- Added `files` property to the main SelfDB class for direct access to FileClient functionality
+- FileClient can now be accessed via `selfdb.files` in addition to importing it separately
+- Improved developer experience by providing consistent access pattern across all client modules
+
+### Changed
+- Enhanced SelfDB class constructor to instantiate FileClient alongside other client modules
+
 ## [1.0.3] - 2025-06-03
 
 ### Changed
