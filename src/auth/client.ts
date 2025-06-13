@@ -9,7 +9,8 @@ import type {
   LoginResponse,
   RefreshTokenResponse,
   AuthTokens,
-  AuthState
+  AuthState,
+  PasswordChangeRequest
 } from './types'
 
 export class AuthClient {
@@ -189,6 +190,32 @@ export class AuthClient {
     } catch (error) {
       if (error instanceof AuthError) {
         this.clearAuthState()
+      }
+      throw error
+    }
+  }
+
+  async changePassword(passwordData: PasswordChangeRequest): Promise<boolean> {
+    if (!this.authState.isAuthenticated) {
+      throw new AuthError('Must be authenticated to change password')
+    }
+
+    try {
+      const result = await this.httpClient.put<boolean>(
+        '/api/v1/users/me/password',
+        passwordData,
+        {
+          headers: this.getAuthHeaders()
+        }
+      )
+      
+      return result
+    } catch (error) {
+      if (error instanceof Error && 'response' in error) {
+        const response = (error as any).response
+        if (response?.status === 400) {
+          throw new AuthError('Current password is incorrect')
+        }
       }
       throw error
     }

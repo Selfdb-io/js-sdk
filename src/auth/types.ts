@@ -18,6 +18,11 @@ export interface RegisterRequest {
   is_active?: boolean
 }
 
+export interface PasswordChangeRequest {
+  current_password: string
+  new_password: string
+}
+
 export interface LoginResponse {
   access_token: string
   refresh_token: string
