@@ -1,48 +1,54 @@
-import { Config, type SelfDBConfig } from './config'
-import { AuthClient } from './auth/client'
-import { DatabaseClient } from './db/client'
-import { StorageClient } from './storage/client'
-import { RealtimeClient, type RealtimeConfig } from './realtime/client'
-import { FunctionsClient } from './functions/client'
-import { FileClient } from './storage/files'
+/**
+ * SelfDB TypeScript/JavaScript SDK
+ * 
+ * Full Self-Hosted BaaS Built for AI Agents.
+ */
 
+import { HttpClient, HttpClientConfig } from './client';
+import { Auth } from './auth';
+import { Tables } from './tables';
+import { Storage } from './storage';
+import { Realtime } from './realtime';
+
+/**
+ * SelfDB client configuration
+ */
+export interface SelfDBConfig {
+    baseUrl: string;
+    apiKey: string;
+    timeout?: number;
+}
+
+/**
+ * Main SelfDB client
+ */
 export class SelfDB {
-  public readonly auth: AuthClient
-  public readonly db: DatabaseClient
-  public readonly storage: StorageClient
-  public readonly realtime: RealtimeClient
-  public readonly functions: FunctionsClient
-  public readonly files: FileClient
-
-  constructor(config: SelfDBConfig, realtimeConfig?: RealtimeConfig) {
-    Config.init(config)
+    private client: HttpClient;
     
-    this.auth = new AuthClient()
-    this.db = new DatabaseClient(this.auth)
-    this.storage = new StorageClient(this.auth)
-    this.realtime = new RealtimeClient(this.auth, realtimeConfig)
-    this.functions = new FunctionsClient(this.auth)
-    this.files = new FileClient(this.auth)
-  }
+    public readonly auth: Auth;
+    public readonly tables: Tables;
+    public readonly storage: Storage;
+    public readonly realtime: Realtime;
+
+    constructor(config: SelfDBConfig) {
+        const httpConfig: HttpClientConfig = {
+            baseUrl: config.baseUrl,
+            apiKey: config.apiKey,
+            timeout: config.timeout,
+        };
+
+        this.client = new HttpClient(httpConfig);
+        this.auth = new Auth(this.client);
+        this.tables = new Tables(this.client);
+        this.storage = new Storage(this.client);
+        this.realtime = new Realtime(this.client, config.baseUrl, config.apiKey);
+    }
 }
 
-export function createClient(config: SelfDBConfig, realtimeConfig?: RealtimeConfig): SelfDB {
-  return new SelfDB(config, realtimeConfig)
-}
-
-export * from './errors'
-export * from './config'
-export * from './auth/types'
-export * from './db/types'
-export * from './storage/types'
-export * from './realtime/types'
-export * from './functions/types'
-
-// Export individual client classes
-export { AuthClient } from './auth/client'
-export { DatabaseClient } from './db/client'
-export { StorageClient } from './storage/client'
-export { BucketClient } from './storage/buckets'
-export { FileClient } from './storage/files'
-export { RealtimeClient } from './realtime/client'
-export { FunctionsClient } from './functions/client'
+// Re-export everything
+export * from './errors';
+export * from './models';
+export * from './auth';
+export * from './tables';
+export * from './storage';
+export * from './realtime';

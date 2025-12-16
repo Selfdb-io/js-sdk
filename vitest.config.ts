@@ -1,28 +1,11 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      thresholds: {
-        global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80
-        }
-      }
-    }
-  },
-  resolve: {
-    alias: {
-      '@': '/src'
-    }
-  },
-  esbuild: {
-    target: 'node16'
-  }
-})
+    test: {
+        globals: true,
+        environment: 'node',
+        include: ['tests/**/*.test.ts'],
+        testTimeout: 30000,
+        hookTimeout: 30000,
+    },
+});

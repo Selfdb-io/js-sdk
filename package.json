@@ -1,64 +1,58 @@
 {
   "name": "@selfdb/js-sdk",
-  "version": "1.0.5",
-  "type": "module",
-  "description": "Official JavaScript/TypeScript SDK for SelfDB - a self-hosted alternative to Supabase",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "0.0.5",
+  "description": "TypeScript/JavaScript SDK for SelfDB - Full Self-Hosted BaaS Built for AI Agents",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "type-check": "tsc --noEmit",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "selfdb",
+    "baas",
+    "backend-as-a-service",
     "database",
     "storage",
     "realtime",
-    "authentication",
-    "functions",
+    "ai-agents",
     "typescript",
-    "javascript",
     "sdk"
   ],
-  "author": "SelfDB Team",
+  "author": "",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Selfdb-io/js-sdk.git",
-    "directory": "js-sdk"
-  },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "@vitest/coverage-v8": "^1.1.0",
-    "eslint": "^8.56.0",
-    "jsdom": "^26.1.0",
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.3",
-    "vitest": "^1.1.0"
-  },
-  "dependencies": {
-    "axios": "^1.6.2"
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.0.0",
+    "eslint": "^8.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4",
+    "ws": "^8.0.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/selfdb/selfdb"
   }
 }

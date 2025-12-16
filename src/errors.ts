@@ -1,104 +1,93 @@
-export interface ErrorConfig {
-  message: string
-  code?: string
-  action?: string
-  suggestion?: string
-  retryable?: boolean
-  status?: number
-  data?: unknown
-}
+/**
+ * SelfDB SDK Error Classes
+ * 
+ * Error hierarchy for handling API errors in a structured way.
+ */
 
+/**
+ * Base error class for all SelfDB SDK errors
+ */
 export class SelfDBError extends Error {
-  public readonly code: string
-  public readonly action?: string
-  public readonly suggestion?: string
-  public readonly retryable: boolean
-  public readonly status?: number
-  public readonly data?: unknown
+    public readonly status?: number;
+    public readonly code?: string;
+    public readonly details?: unknown;
 
-  constructor(config: string | ErrorConfig, status?: number, data?: unknown) {
-    if (typeof config === 'string') {
-      super(config)
-      this.code = 'GENERIC_ERROR'
-      this.retryable = false
-      this.status = status
-      this.data = data
-    } else {
-      super(config.message)
-      this.code = config.code || 'GENERIC_ERROR'
-      this.action = config.action
-      this.suggestion = config.suggestion
-      this.retryable = config.retryable || false
-      this.status = config.status || status
-      this.data = config.data || data
+    constructor(message: string, status?: number, code?: string, details?: unknown) {
+        super(message);
+        this.name = 'SelfDBError';
+        this.status = status;
+        this.code = code;
+        this.details = details;
+        Object.setPrototypeOf(this, new.target.prototype);
     }
-    this.name = 'SelfDBError'
-  }
-
-  isRetryable(): boolean {
-    return this.retryable
-  }
 }
 
-export class ApiError extends SelfDBError {
-  constructor(message: string, status: number, data?: unknown) {
-    super({
-      message,
-      code: 'API_ERROR',
-      status,
-      data,
-      retryable: status >= 500
-    })
-    this.name = 'ApiError'
-  }
+/**
+ * Network failures and connection issues
+ */
+export class APIConnectionError extends SelfDBError {
+    constructor(message: string = 'Failed to connect to the API', details?: unknown) {
+        super(message, undefined, 'CONNECTION_ERROR', details);
+        this.name = 'APIConnectionError';
+    }
 }
 
-export class NetworkError extends SelfDBError {
-  constructor(message: string) {
-    super({
-      message,
-      code: 'NETWORK_ERROR',
-      suggestion: 'Check your internet connection and SelfDB server status',
-      retryable: true
-    })
-    this.name = 'NetworkError'
-  }
+/**
+ * 400 Bad Request - Invalid request parameters
+ */
+export class BadRequestError extends SelfDBError {
+    constructor(message: string = 'Bad request', details?: unknown) {
+        super(message, 400, 'BAD_REQUEST', details);
+        this.name = 'BadRequestError';
+    }
 }
 
-export class TimeoutError extends SelfDBError {
-  constructor(message: string) {
-    super({
-      message,
-      code: 'TIMEOUT_ERROR',
-      suggestion: 'The request took too long. Try again or check your connection',
-      retryable: true
-    })
-    this.name = 'TimeoutError'
-  }
+/**
+ * 401 Unauthorized - Authentication required or invalid credentials
+ */
+export class AuthenticationError extends SelfDBError {
+    constructor(message: string = 'Authentication required', details?: unknown) {
+        super(message, 401, 'AUTHENTICATION_ERROR', details);
+        this.name = 'AuthenticationError';
+    }
 }
 
-export class AuthError extends SelfDBError {
-  constructor(message: string) {
-    super({
-      message,
-      code: 'AUTH_ERROR',
-      status: 401,
-      suggestion: 'Check your credentials or login again',
-      action: 'auth.login'
-    })
-    this.name = 'AuthError'
-  }
+/**
+ * 403 Forbidden - Insufficient permissions
+ */
+export class PermissionDeniedError extends SelfDBError {
+    constructor(message: string = 'Permission denied', details?: unknown) {
+        super(message, 403, 'PERMISSION_DENIED', details);
+        this.name = 'PermissionDeniedError';
+    }
 }
 
-export class ValidationError extends SelfDBError {
-  constructor(message: string, data?: unknown) {
-    super({
-      message,
-      code: 'VALIDATION_ERROR',
-      status: 400,
-      data,
-      suggestion: 'Check your input data and try again'
-    })
-    this.name = 'ValidationError'
-  }
+/**
+ * 404 Not Found - Resource not found
+ */
+export class NotFoundError extends SelfDBError {
+    constructor(message: string = 'Resource not found', details?: unknown) {
+        super(message, 404, 'NOT_FOUND', details);
+        this.name = 'NotFoundError';
+    }
+}
+
+/**
+ * 409 Conflict - Resource conflict
+ */
+export class ConflictError extends SelfDBError {
+    constructor(message: string = 'Resource conflict', details?: unknown) {
+        super(message, 409, 'CONFLICT', details);
+        this.name = 'ConflictError';
+    }
+}
+
+/**
+ * 500 Internal Server Error
+ */
+export class InternalServerError extends SelfDBError {
+    constructor(message: string = 'Internal server error', details?: unknown) {
+        super(message, 500, 'INTERNAL_SERVER_ERROR', details);
+        this.name = 'InternalServerError';
+    }
 }
